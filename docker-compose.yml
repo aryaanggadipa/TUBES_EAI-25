@@ -1,0 +1,105 @@
+# version: '3.8' 
+
+services:
+  mysql_db:
+    image: mysql:8.0
+    container_name: mysql_marketplace
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: product_catalog_db # Default DB, others created by init script
+    ports:
+      - "3306:3306" # Hati-hati jika port ini sudah digunakan
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d # Skrip inisialisasi
+    networks:
+      - marketplace_network
+
+  product_service:
+    build: ./product-service
+    container_name: product_service
+    ports:
+      - "4001:4001"
+    depends_on:
+      - mysql_db
+    environment:
+      DATABASE_HOST: mysql_db
+      DATABASE_USER: root
+      DATABASE_PASSWORD: rootpassword
+      DATABASE_NAME: product_catalog_db
+      PORT: 4001
+    volumes:
+      - ./product-service/src:/app/src # Sinkronisasi kode untuk pengembangan
+    networks:
+      - marketplace_network
+    restart: on-failure
+
+  order_service:
+    build: ./order-service
+    container_name: order_service
+    ports:
+      - "4002:4002"
+    depends_on:
+      - mysql_db
+      - product_service # Order service mungkin perlu mengambil data produk
+    environment:
+      DATABASE_HOST: mysql_db
+      DATABASE_USER: root
+      DATABASE_PASSWORD: rootpassword
+      DATABASE_NAME: order_db
+      PORT: 4002
+      PRODUCT_SERVICE_URL: http://product_service:4001/graphql
+    volumes:
+      - ./order-service/src:/app/src
+    networks:
+      - marketplace_network
+    restart: on-failure
+
+  production_request_service:
+    build: ./production-request-service
+    container_name: production_request_service
+    ports:
+      - "4003:4003"
+    depends_on:
+      - mysql_db
+      # - order_service # Jika ada trigger dari order service
+    environment:
+      DATABASE_HOST: mysql_db
+      DATABASE_USER: root
+      DATABASE_PASSWORD: rootpassword
+      DATABASE_NAME: production_request_db
+      PORT: 4003
+      MANUFACTURING_GRAPHQL_ENDPOINT: http://manufacturing_system_url/graphql # Ganti dengan URL sistem manufaktur Kelompok 3
+    volumes:
+      - ./production-request-service/src:/app/src
+    networks:
+      - marketplace_network
+    restart: on-failure
+
+  stock_service:
+    build: ./stock-service
+    container_name: stock_service
+    ports:
+      - "4004:4004"
+    depends_on:
+      - mysql_db
+      # - order_service
+      # - production_request_service
+    environment:
+      DATABASE_HOST: mysql_db
+      DATABASE_USER: root
+      DATABASE_PASSWORD: rootpassword
+      DATABASE_NAME: stock_db
+      PORT: 4004
+      MANUFACTURING_GRAPHQL_ENDPOINT: http://manufacturing_system_url/graphql # Ganti dengan URL sistem manufaktur Kelompok 3
+      ORDER_SERVICE_URL: http://order_service:4002/graphql # Jika perlu interaksi
+    volumes:
+      - ./stock-service/src:/app/src
+    networks:
+      - marketplace_network
+    restart: on-failure
+
+networks:
+  marketplace_network:
+    driver: bridge
