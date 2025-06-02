@@ -9,7 +9,7 @@ services:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: product_catalog_db # Default DB, others created by init script
     ports:
-      - "3306:3306" # Hati-hati jika port ini sudah digunakan
+      - "3307:3306" # Menggunakan port 3307 untuk menghindari konflik
     volumes:
       - ./mysql/data:/var/lib/mysql
       - ./mysql/init:/docker-entrypoint-initdb.d # Skrip inisialisasi
