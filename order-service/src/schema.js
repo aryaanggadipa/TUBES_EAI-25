@@ -63,6 +63,7 @@ const typeDefs = gql`
     order(order_id: ID!): Order
     ordersByCustomer(customer_id: ID!): [Order]
     customer(customer_id: ID!): Customer
+    getAllCustomers: [Customer]
     # Query untuk pengujian interaksi (opsional)
     fetchProductDetailsFromProductService(product_id: ID!): ProductInfo 
     checkStockFromStockService(product_id: Int!, quantity: Int!): StockCheckResponse

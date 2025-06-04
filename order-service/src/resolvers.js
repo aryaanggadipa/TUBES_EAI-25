@@ -61,6 +61,15 @@ const resolvers = {
         throw new Error('Failed to fetch customer');
       }
     },
+    getAllCustomers: async () => {
+      try {
+        const [rows] = await db.query('SELECT * FROM customers');
+        return rows;
+      } catch (error) {
+        console.error('Error fetching all customers:', error);
+        throw new Error('Failed to fetch customers');
+      }
+    },
     // Untuk pengujian interaksi
     fetchProductDetailsFromProductService: async (_, { product_id }) => {
         return internalServiceClient.getProductDetails(product_id);
