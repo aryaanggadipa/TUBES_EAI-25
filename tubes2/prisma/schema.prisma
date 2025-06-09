@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Stock {
+  id Int @id @default(autoincrement())
+  product_id Int @db.Int
+  quantity Int @db.Int
+  reorder_point Int @db.Int
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  histories History[]
+
+  @@map("stocks")
+}
+
+enum HistoryType {
+  IN
+  OUT
+}
+
+model History {
+  id Int @db.Int @default(autoincrement()) @id
+  stock_id Int 
+  type HistoryType
+  stock Stock @relation(fields: [stock_id], references: [id], onDelete: Cascade)
+  quantity Int @db.Int
+  note String?
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+
+  @@map("histories")
+}
+
+model Notification {
+  id Int @db.Int @default(autoincrement()) @id
+  product_id Int @db.Int
+  message String?
+  created_at DateTime @default(now())
+  is_read Boolean @default(false)
+
+  @@map("notifications")
+}
