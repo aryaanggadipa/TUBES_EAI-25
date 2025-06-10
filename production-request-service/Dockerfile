@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install project dependencies
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Copy the rest of the application code
 COPY . .
@@ -22,7 +22,7 @@ ENV DATABASE_HOST=mysql_db
 ENV DATABASE_USER=root
 ENV DATABASE_PASSWORD=rootpassword
 ENV DATABASE_NAME=production_request_db
-ENV MANUFACTURING_GRAPHQL_ENDPOINT=http://manufacturing_system_url/graphql
+ENV MANUFACTURING_GRAPHQL_ENDPOINT=http://localhost:5001/graphql
 
 # Run the app when the container launches
 CMD ["npm", "start"]

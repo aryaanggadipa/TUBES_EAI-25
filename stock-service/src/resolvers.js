@@ -4,8 +4,24 @@
 const db = require('./db');
 const internalServiceClient = require('./internalServiceClient'); // Untuk interaksi dengan ProductionRequestService & ManufacturingSystem
 
+// Implementasi custom DateTime scalar
+const { Kind } = require('graphql/language');
+
 const resolvers = {
-  DateTime: require('graphql-iso-date').GraphQLDateTime,
+  DateTime: {
+    serialize(value) {
+      return value instanceof Date ? value.toISOString() : null;
+    },
+    parseValue(value) {
+      return new Date(value);
+    },
+    parseLiteral(ast) {
+      if (ast.kind === Kind.STRING) {
+        return new Date(ast.value);
+      }
+      return null;
+    }
+  },
 
   Query: {
     getStockByProductId: async (_, { product_id }) => {

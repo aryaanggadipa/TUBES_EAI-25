@@ -1,6 +1,7 @@
 // production-request-service/src/schema.js
 `src/schema.js`
-// GraphQL Schema Definition
+// Skema GraphQL tidak banyak berubah, karena ini adalah API internal Anda.
+// Perubahan utama ada pada logika resolver dan client.
 const { gql } = require('graphql-tag');
 
 const typeDefs = gql`
@@ -11,37 +12,38 @@ const typeDefs = gql`
     product_id: Int!
     quantity_requested: Int!
     request_sent_timestamp: DateTime!
+    # ID dari sistem manufaktur Kelompok 3
     manufacturer_batch_id: String
-    manufacturer_status_ack: String # e.g., 'ACCEPTED', 'REJECTED_CAPACITY_FULL', 'PENDING_CONFIRMATION'
-    estimated_completion_date: String # Store as DATE in DB, represent as String (e.g., YYYY-MM-DD)
+    # Status dari sistem manufaktur Kelompok 3
+    manufacturer_status_ack: String 
+    # Estimasi tanggal selesai dari sistem manufaktur Kelompok 3
+    estimated_completion_date: String
     last_response_from_manufacturer: DateTime
   }
 
   input CreateProductionRequestInput {
     product_id: Int!
     quantity_requested: Int!
-    # Detail produk dan desain bisa ditambahkan di sini jika perlu dikirim ke manufaktur
-    # product_name: String 
-    # design_details: String 
   }
 
-  input UpdateProductionRequestInput {
-    request_id: ID!
-    manufacturer_batch_id: String
-    manufacturer_status_ack: String
-    estimated_completion_date: String # YYYY-MM-DD
+  # Input ini bisa digunakan jika ada callback/webhook dari sistem manufaktur
+  # untuk memperbarui status di sistem kita.
+  input UpdateProductionRequestStatusInput {
+    request_id: ID! # ID permintaan di sistem kita
+    manufacturer_batch_id: String! # ID produksi dari sistem manufaktur
+    new_status: String!
+    estimated_completion_date: String
   }
 
   type Query {
     productionRequest(request_id: ID!): ProductionRequest
     allProductionRequests: [ProductionRequest]
-    productionRequestsByStatus(status: String!): [ProductionRequest]
   }
 
   type Mutation {
+    # Mutation utama untuk membuat permintaan produksi baru.
+    # Ini akan dipanggil oleh Stock Service Anda.
     createProductionRequest(input: CreateProductionRequestInput!): ProductionRequest
-    # Mutation ini untuk internal update setelah mendapat feedback dari manufaktur
-    updateProductionRequestFromManufacturer(input: UpdateProductionRequestInput!): ProductionRequest
   }
 `;
 

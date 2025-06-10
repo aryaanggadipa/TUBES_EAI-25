@@ -42,6 +42,25 @@ CREATE TABLE IF NOT EXISTS orders (
     status VARCHAR(50) DEFAULT 'PENDING', -- Contoh status: PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELED
     FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
     -- Tidak ada foreign key langsung ke products karena beda database,
+
+-- ====================================================================
+-- Database dan Tabel untuk Layanan Otentikasi (Auth Service)
+-- ====================================================================
+
+-- Membuat dan menggunakan database auth_db
+CREATE DATABASE IF NOT EXISTS auth_db;
+USE auth_db;
+
+-- Membuat tabel users untuk menyimpan informasi pengguna
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    phone VARCHAR(25),
+    address TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
     -- integritas dijaga di level aplikasi.
 );
 
@@ -55,14 +74,22 @@ INSERT INTO customers (name, email, phone, address) VALUES
 USE production_request_db;
 
 CREATE TABLE IF NOT EXISTS production_requests (
-    request_id INT AUTO_INCREMENT PRIMARY KEY,
-    product_id INT NOT NULL, -- Merujuk ke product_id di product_catalog_db
-    quantity_requested INT NOT NULL,
-    request_sent_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    manufacturer_batch_id VARCHAR(100),
-    manufacturer_status_ack VARCHAR(255), -- e.g., 'ACCEPTED', 'REJECTED_CAPACITY_FULL'
-    estimated_completion_date DATE,
-    last_response_from_manufacturer TIMESTAMP NULL
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    graphql_request_id VARCHAR(255) UNIQUE NOT NULL, -- Corresponds to GraphQL requestId
+    customer_id VARCHAR(255) NOT NULL, -- Corresponds to GraphQL customerId
+    product_id INT NOT NULL, -- Internal reference to product_catalog_db
+    product_name VARCHAR(255) NOT NULL, -- Corresponds to GraphQL productName
+    quantity INT NOT NULL, -- Corresponds to GraphQL quantity
+    priority ENUM('low', 'normal', 'high', 'urgent') NOT NULL, -- Corresponds to GraphQL priority
+    due_date VARCHAR(255) NOT NULL, -- Corresponds to GraphQL dueDate (String)
+    specifications TEXT DEFAULT NULL, -- Corresponds to GraphQL specifications
+    status ENUM('received', 'planned', 'in_production', 'completed', 'cancelled') NOT NULL DEFAULT 'received', -- Corresponds to GraphQL status
+    marketplace_data TEXT DEFAULT NULL, -- Corresponds to GraphQL marketplaceData
+    manufacturer_batch_id VARCHAR(100), -- Kept for existing specific functionality
+    manufacturer_status_ack VARCHAR(255), -- Kept for existing specific functionality, e.g., 'ACCEPTED', 'REJECTED_CAPACITY_FULL'
+    last_response_from_manufacturer TIMESTAMP NULL, -- Kept for existing specific functionality
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- Corresponds to GraphQL createdAt
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP -- Corresponds to GraphQL updatedAt
 );
 
 -- Menggunakan database stock_db

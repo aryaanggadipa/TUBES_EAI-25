@@ -2,6 +2,7 @@
 `src/index.js`
 // Main server file for Product Service
 const express = require('express');
+const cors = require('cors');
 const { ApolloServer } = require('@apollo/server');
 const { expressMiddleware } = require('@apollo/server/express4'); // For Express 4
 const typeDefs = require('./schema');
@@ -14,6 +15,7 @@ const port = process.env.PORT || 4001;
 
 // Middleware
 app.use(express.json()); // Body parser for REST (if any)
+app.use(cors()); // Enable CORS
 
 async function startServer() {
   const server = new ApolloServer({

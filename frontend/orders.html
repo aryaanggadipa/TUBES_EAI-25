@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesanan Saya - FashionPlace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen text-gray-800">
+
+    <!-- Header / Navbar -->
+    <header class="bg-white shadow-md sticky top-0 z-10">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="index.html" class="text-2xl font-bold text-blue-600">FashionPlace</a>
+                </div>
+                <div class="hidden md:block">
+                    <div id="nav-links" class="ml-10 flex items-center space-x-4">
+                        <!-- Desktop links and cart icon will be dynamically inserted here -->
+                    </div>
+                </div>
+                <div class="-mr-2 flex md:hidden">
+                    <button type="button" class="bg-white inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500" aria-controls="mobile-menu" aria-expanded="false" id="mobile-menu-button">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /></svg>
+                        <svg class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div class="md:hidden" id="mobile-menu" style="display: none;">
+            <div id="nav-links-mobile" class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <!-- Mobile links and cart icon will be dynamically inserted here -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Konten Utama -->
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold tracking-tight text-gray-900">Pesanan Saya</h1>
+        </div>
+
+        <!-- Daftar Pesanan -->
+        <div id="order-list" class="space-y-6">
+            <!-- Daftar pesanan akan dimuat di sini secara dinamis oleh JavaScript -->
+            
+            <!-- Pesan jika tidak ada pesanan -->
+            <div id="no-orders-message" class="text-center py-10 text-gray-500 text-lg hidden">
+                Anda belum memiliki pesanan.
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-auto">
+        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500">
+            <p>&copy; 2025 FashionPlace.</p>
+        </div>
+    </footer>
+
+    <script>
+    // Standard Navigation Script (FashionPlace - with Cart)
+    document.addEventListener('DOMContentLoaded', () => {
+        const navLinksContainer = document.getElementById('nav-links');
+        const navLinksMobileContainer = document.getElementById('nav-links-mobile');
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        if (navLinksContainer) navLinksContainer.innerHTML = '';
+        if (navLinksMobileContainer) navLinksMobileContainer.innerHTML = '';
+
+        const userEmail = localStorage.getItem('userEmail');
+        const authToken = localStorage.getItem('authToken');
+        const currentPagePath = window.location.pathname;
+        const pageBasename = currentPagePath.substring(currentPagePath.lastIndexOf('/') + 1) || 'index.html';
+
+        // Redirect logic for protected pages if accessed directly without login
+        if (!authToken && (pageBasename === 'keranjang.html' || pageBasename === 'orders.html')) {
+            window.location.href = 'login.html';
+            return; // Stop further script execution for this page
+        }
+
+        function createNavLink(href, text, pageName, isMobile = false) {
+            const link = document.createElement('a');
+            link.href = href;
+            link.textContent = text;
+            let isActive = false;
+
+            if (pageName === 'index.html' && (pageBasename === 'index.html' || pageBasename === '' || currentPagePath.endsWith('/marketplace-sistem/') || currentPagePath.endsWith('/marketplace-sistem/index.html'))) {
+                isActive = true;
+            } else if (pageName !== 'index.html' && pageBasename === pageName) {
+                isActive = true;
+            }
+            
+            const activeClassesMobile = 'block px-3 py-2 rounded-md text-base font-medium text-blue-700 bg-blue-50';
+            const inactiveClassesMobile = 'block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800';
+            const activeClassesDesktop = 'text-blue-600 font-semibold hover:text-blue-700 px-3 py-2 rounded-md text-sm font-medium';
+            const inactiveClassesDesktop = 'text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium';
+
+            link.className = isMobile ? (isActive ? activeClassesMobile : inactiveClassesMobile) : (isActive ? activeClassesDesktop : inactiveClassesDesktop);
+            return link;
+        }
+        
+        function createCartIconLink(isMobile = false) {
+            const cartLink = document.createElement('a');
+            cartLink.href = 'keranjang.html';
+            cartLink.setAttribute('aria-label', 'Keranjang Belanja');
+            
+            const activeClassesMobile = 'block px-3 py-2 rounded-md text-base font-medium text-blue-700 bg-blue-50';
+            const inactiveClassesMobile = 'block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800';
+            const activeClassesDesktop = 'text-blue-600 font-semibold hover:text-blue-700 px-3 py-2 rounded-md text-sm font-medium';
+            const inactiveClassesDesktop = 'text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium';
+
+            cartLink.className = isMobile ? (pageBasename === 'keranjang.html' ? activeClassesMobile : inactiveClassesMobile) : (pageBasename === 'keranjang.html' ? activeClassesDesktop : inactiveClassesDesktop);
+            
+            cartLink.innerHTML = `
+                <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+                <span id="cart-icon-count" class="ml-1 bg-red-600 text-white text-xs font-semibold rounded-full px-1.5 py-0.5 align-super" style="display: none; font-size: 0.65rem; vertical-align: super;">0</span>
+                <span class="sr-only">Item di keranjang</span>
+            `; 
+            return cartLink;
+        }
+
+        function populateNavLinks(container, isMobile) {
+            if (!container) return;
+            container.appendChild(createNavLink('index.html', 'Katalog', 'index.html', isMobile));
+
+            if (authToken && userEmail) { // User is logged in
+                container.appendChild(createNavLink('orders.html', 'Pesanan Saya', 'orders.html', isMobile));
+                container.appendChild(createCartIconLink(isMobile));
+                
+                const logoutLink = document.createElement('a');
+                logoutLink.href = '#';
+                logoutLink.textContent = 'Logout';
+                logoutLink.className = isMobile ? inactiveClassesMobile : inactiveClassesDesktop;
+                logoutLink.onclick = function(e) {
+                    e.preventDefault();
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('userEmail');
+                    window.location.href = 'login.html';
+                };
+                container.appendChild(logoutLink);
+            } else { // User is not logged in (this block might not be reached due to earlier redirect)
+                container.appendChild(createNavLink('login.html', 'Login', 'login.html', isMobile));
+                container.appendChild(createNavLink('register.html', 'Register', 'register.html', isMobile));
+                container.appendChild(createCartIconLink(isMobile)); // Show cart icon even if not logged in
+            }
+        }
+
+        if (navLinksContainer) populateNavLinks(navLinksContainer, false);
+        if (navLinksMobileContainer) populateNavLinks(navLinksMobileContainer, true);
+
+        if (mobileMenuButton && mobileMenu) {
+            mobileMenuButton.addEventListener('click', () => {
+                const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true' || false;
+                mobileMenuButton.setAttribute('aria-expanded', !isExpanded);
+                mobileMenu.style.display = isExpanded ? 'none' : 'block';
+                mobileMenuButton.querySelectorAll('svg').forEach(svg => svg.classList.toggle('hidden'));
+            });
+        }
+        // Call updateCartIcon on page load to set initial count from localStorage
+        if (typeof window.updateCartIcon === 'function') {
+            window.updateCartIcon();
+        }
+    });
+    </script>
+
+    <script>
+        // Script for orders page - specific logic for fetching and displaying orders
+        document.addEventListener('DOMContentLoaded', async () => {
+            const ordersContainer = document.getElementById('orders-container');
+            const statusMessage = document.getElementById('status-message');
+            const authToken = localStorage.getItem('authToken');
+            // const userEmail = localStorage.getItem('userEmail'); // userEmail not directly used in this script part
+
+            if (!authToken) {
+                if (statusMessage) {
+                    statusMessage.innerHTML = '<p class="text-red-500">Anda harus login untuk melihat pesanan.</p><a href="login.html" class="text-blue-500 hover:underline">Login Sekarang</a>';
+                }
+                // Redirect to login if not authenticated, as navbar script might not run if this executes first
+                // or if elements are missing.
+                if (!document.getElementById('nav-links')) { // Check if navbar script has run
+                     window.location.href = 'login.html';
+                }
+                return;
+            }
+
+            if(statusMessage) statusMessage.textContent = 'Memuat pesanan...';
+
+            try {
+                const response = await fetch('http://localhost:4003/orders', { 
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        if(statusMessage) statusMessage.innerHTML = '<p class="text-red-500">Sesi Anda telah berakhir atau tidak valid. Silakan login kembali.</p><a href="login.html" class="text-blue-500 hover:underline">Login Sekarang</a>';
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('userEmail');
+                        return;
+                    }
+                    throw new Error(`Gagal mengambil data pesanan: ${response.statusText} (status: ${response.status})`);
+                }
+
+                const orders = await response.json();
+
+                if (orders.length === 0) {
+                    if(statusMessage) statusMessage.textContent = 'Anda belum memiliki pesanan.';
+                    if(ordersContainer) ordersContainer.innerHTML = ''; 
+                    return;
+                }
+
+                if(statusMessage) statusMessage.textContent = ''; 
+                if(ordersContainer) ordersContainer.innerHTML = ''; 
+
+                orders.forEach(order => {
+                    const orderCard = document.createElement('div');
+                    orderCard.className = 'bg-white shadow-lg rounded-lg p-6 mb-6';
+                    
+                    let itemsHtml = '<ul class="list-disc list-inside mb-2">';
+                    order.items.forEach(item => {
+                        itemsHtml += `<li class="text-gray-700">${item.product_name} - Kuantitas: ${item.quantity} - Harga: Rp ${item.price.toLocaleString('id-ID')}</li>`;
+                    });
+                    itemsHtml += '</ul>';
+
+                    orderCard.innerHTML = `
+                        <h3 class="text-xl font-semibold text-blue-600 mb-2">Pesanan ID: ${order.order_id}</h3>
+                        <p class="text-gray-600 mb-1"><strong class="font-medium">Tanggal:</strong> ${new Date(order.order_date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                        <p class="text-gray-600 mb-1"><strong class="font-medium">Status:</strong> <span class="font-semibold ${order.status === 'Completed' ? 'text-green-600' : (order.status === 'Pending' ? 'text-yellow-600' : 'text-red-600')}">${order.status}</span></p>
+                        <p class="text-gray-800 font-bold text-lg mb-3"><strong class="font-medium">Total:</strong> Rp ${order.total_amount.toLocaleString('id-ID')}</p>
+                        <div>
+                            <h4 class="text-md font-semibold text-gray-700 mb-1">Detail Item:</h4>
+                            ${itemsHtml}
+                        </div>
+                    `;
+                    if(ordersContainer) ordersContainer.appendChild(orderCard);
+                });
+
+            } catch (error) {
+                console.error('Error fetching orders:', error);
+                if(statusMessage) statusMessage.innerHTML = `<p class="text-red-500">Terjadi kesalahan saat memuat pesanan Anda. Pastikan layanan 'order-service' berjalan di port 4003.</p><p class="text-sm text-gray-500 mt-1">Detail: ${error.message}</p>`;
+            }
+        });
+    </script>
+<script src="js/cart.js"></script>
+    <script src="js/orders.js"></script>
+</body>
+</html>

@@ -70,7 +70,7 @@ services:
       DATABASE_PASSWORD: rootpassword
       DATABASE_NAME: production_request_db
       PORT: 4003
-      MANUFACTURING_GRAPHQL_ENDPOINT: http://manufacturing_system_url/graphql # Ganti dengan URL sistem manufaktur Kelompok 3
+      MANUFACTURING_GRAPHQL_ENDPOINT: http://localhost:5001/graphql # Ganti dengan URL sistem manufaktur Kelompok 3
     volumes:
       - ./production-request-service/src:/app/src
     networks:
@@ -92,13 +92,48 @@ services:
       DATABASE_PASSWORD: rootpassword
       DATABASE_NAME: stock_db
       PORT: 4004
-      MANUFACTURING_GRAPHQL_ENDPOINT: http://manufacturing_system_url/graphql # Ganti dengan URL sistem manufaktur Kelompok 3
+      MANUFACTURING_GRAPHQL_ENDPOINT: http://localhost:5001/graphql # Ganti dengan URL sistem manufaktur Kelompok 3
       ORDER_SERVICE_URL: http://order_service:4002/graphql # Jika perlu interaksi
     volumes:
       - ./stock-service/src:/app/src
     networks:
       - marketplace_network
     restart: on-failure
+
+  auth_service:
+    build: ./auth-service
+    container_name: auth_service
+    ports:
+      - "4005:4005"
+    depends_on:
+      - mysql_db
+    environment:
+      DATABASE_HOST: mysql_db
+      DATABASE_USER: root # Sesuaikan jika perlu
+      DATABASE_PASSWORD: rootpassword # Sesuaikan jika perlu
+      DATABASE_NAME: auth_db # Kita akan buat database baru atau gunakan yang ada
+      PORT: 4005
+      JWT_SECRET: "YOUR_VERY_SECRET_KEY_HERE" # Ganti dengan secret key yang kuat dan simpan di .env nantinya
+    volumes:
+      - ./auth-service/src:/app/src # Sinkronisasi kode untuk pengembangan
+    networks:
+      - marketplace_network
+    restart: on-failure
+
+  frontend-server:
+    image: nginx:alpine
+    container_name: marketplace_frontend
+    # Memetakan port 8080 di komputer Anda ke port 80 di dalam container Nginx
+    ports:
+      - "8081:80"
+    # Menyambungkan folder 'frontend' lokal Anda ke folder web root Nginx
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+    restart: unless-stopped
+    depends_on:
+      - product_service # Memastikan frontend baru berjalan setelah backend siap
+    networks:
+      - marketplace_network
 
 networks:
   marketplace_network:

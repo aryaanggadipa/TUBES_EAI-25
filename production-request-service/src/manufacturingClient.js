@@ -1,6 +1,6 @@
 // production-request-service/src/manufacturingClient.js
 `src/manufacturingClient.js`
-// Klien untuk berkomunikasi dengan Sistem Manufaktur (Kelompok 3)
+// Klien untuk berkomunikasi dengan Sistem Manufaktur Kelompok 3
 const { GraphQLClient, gql } = require('graphql-request');
 require('dotenv').config();
 
@@ -13,71 +13,62 @@ if (!manufacturingSystemGraphQLEndpoint) {
   );
 }
 
-// Inisialisasi GraphQLClient hanya jika endpoint ada
 const client = manufacturingSystemGraphQLEndpoint 
-  ? new GraphQLClient(manufacturingSystemGraphQLEndpoint, {
-      // headers: { // Tambahkan header jika dibutuhkan oleh sistem manufaktur
-      //   Authorization: `Bearer ${process.env.MANUFACTURING_API_TOKEN}`,
-      // },
-    })
+  ? new GraphQLClient(manufacturingSystemGraphQLEndpoint)
   : null;
 
 /**
- * Mengirim permintaan produksi ke sistem manufaktur eksternal.
+ * Mengirim permintaan produksi ke sistem manufaktur Kelompok 3.
  * @param {object} requestDetails - Detail permintaan.
- * @param {number} requestDetails.internal_request_id - ID permintaan dari sistem kita.
  * @param {number} requestDetails.product_id - ID produk.
  * @param {number} requestDetails.quantity - Jumlah yang diminta.
- * @param {string} [requestDetails.product_name] - Nama produk (opsional, jika dibutuhkan manufaktur).
- * @param {string} [requestDetails.design_details] - Detail desain (opsional, jika dibutuhkan manufaktur).
- * @returns {Promise<object|null>} - Respons dari sistem manufaktur atau null jika gagal.
- * Contoh respons: { batchId: "B123", status: "ACCEPTED", estimatedCompletionDate: "2025-12-31" }
+ * @returns {Promise<object|null>} - Respons dari sistem manufaktur Kelompok 3.
+ * Contoh respons yang diharapkan: { production_id: "123", status: "PENDING", start_date: "...", end_date: "..." }
  */
 async function sendProductionRequestToManufacturingSystem(requestDetails) {
   if (!client) {
-    console.warn('Manufacturing client is not configured. Simulating successful request.');
-    // Simulasi respons jika tidak ada endpoint
+    console.warn('Manufacturing client not configured. Simulating successful request.');
+    // Simulasi respons jika endpoint tidak ada
     return {
-      batchId: `SIM_BATCH_${requestDetails.internal_request_id}`,
-      status: 'SIMULATED_ACCEPTED',
-      estimatedCompletionDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 7 hari dari sekarang
+      production_id: `SIM_BATCH_${Math.floor(Math.random() * 1000)}`,
+      status: 'SIMULATED_PENDING',
+      end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     };
   }
 
-  // Sesuaikan query/mutation ini dengan skema GraphQL sistem manufaktur Kelompok 3
-  const MUTATION_CREATE_PRODUCTION_ORDER = gql`
-    mutation SubmitProductionOrder($orderInput: ManufacturerProductionOrderInput!) {
-      submitProductionOrder(input: $orderInput) {
-        batchId         # ID batch dari sistem manufaktur
-        status          # Status penerimaan (misalnya, ACCEPTED, REJECTED, PENDING)
-        estimatedCompletionDate # Estimasi tanggal selesai (format YYYY-MM-DD)
-        # ... field lain yang dikembalikan oleh sistem manufaktur
+  // == PENYESUAIAN DENGAN SKEMA KELOMPOK 3 ==
+  // Mutation ini disesuaikan dengan skema GraphQL dari sistem manufaktur teman Anda.
+  const CREATE_PRODUCTION_MUTATION = gql`
+    mutation CreateProduction($product_id: Int!, $quantity: Int!) {
+      createProduction(product_id: $product_id, quantity: $quantity) {
+        production_id
+        status
+        start_date
+        end_date
       }
     }
   `;
 
-  // Sesuaikan variabel ini dengan apa yang diharapkan oleh input ManufacturerProductionOrderInput
+  // Variabel disesuaikan dengan argumen yang dibutuhkan oleh mutasi 'createProduction'.
   const variables = {
-    orderInput: {
-      marketplaceRequestId: String(requestDetails.internal_request_id), // Mengirim ID internal kita
-      productId: String(requestDetails.product_id), // Pastikan tipe data sesuai (String/Int)
-      quantity: requestDetails.quantity,
-      // productName: requestDetails.product_name, // Jika diperlukan
-      // designDetails: requestDetails.design_details, // Jika diperlukan
-      // ... field lain yang dibutuhkan sistem manufaktur
-    },
+    product_id: parseInt(requestDetails.product_id), // Pastikan tipe data benar (Int)
+    quantity: parseInt(requestDetails.quantity)      // Pastikan tipe data benar (Int)
   };
+  // ==========================================
 
   try {
-    console.log(`Sending production request to manufacturing system: ${JSON.stringify(variables)}`);
-    const data = await client.request(MUTATION_CREATE_PRODUCTION_ORDER, variables);
+    console.log(`Sending 'createProduction' request to manufacturing system: ${JSON.stringify(variables)}`);
+    // 'client.request' akan mengirim permintaan GraphQL ke endpoint yang dikonfigurasi.
+    const data = await client.request(CREATE_PRODUCTION_MUTATION, variables);
     console.log('Response from manufacturing system:', data);
-    return data.submitProductionOrder; // Sesuaikan dengan path respons yang benar
+    
+    // Kembalikan data dari 'createProduction' yang ada di dalam respons
+    return data.createProduction;
+
   } catch (error) {
     console.error('Error sending production request to manufacturing system:', error.message);
-    // Anda bisa melempar error spesifik atau mengembalikan null/objek error
-    // throw new Error(`Failed to send request to manufacturing: ${error.message}`);
-    return null; // Atau return objek error yang bisa ditangani resolver
+    // Melempar error agar resolver bisa menanganinya.
+    throw new Error(`Failed to send request to manufacturing system: ${error.message}`);
   }
 }
 
