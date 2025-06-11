@@ -17,7 +17,7 @@ datasource db {
 
 model Stock {
   id Int @id @default(autoincrement())
-  product_id Int @db.Int
+  product_id Int @db.Int @unique
   quantity Int @db.Int
   reorder_point Int @db.Int
   created_at DateTime @default(now())
@@ -34,9 +34,9 @@ enum HistoryType {
 
 model History {
   id Int @db.Int @default(autoincrement()) @id
-  stock_id Int 
+  product_id Int 
   type HistoryType
-  stock Stock @relation(fields: [stock_id], references: [id], onDelete: Cascade)
+  stock Stock @relation(fields: [product_id], references: [id], onDelete: Cascade)
   quantity Int @db.Int
   note String?
   created_at DateTime @default(now())
@@ -53,4 +53,20 @@ model Notification {
   is_read Boolean @default(false)
 
   @@map("notifications")
+}
+
+enum FEEDBACKSTATUS {
+  PENDING
+  COMPLETED
+}
+
+model FeedbackRequest {
+  id Int @id @default(autoincrement())
+  batch_number Int
+  product_id Int
+  quantity Int
+  status FEEDBACKSTATUS
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  note String?
 }

@@ -6,8 +6,9 @@ export const typeDefinitions = `#graphql
 
     type Mutation {
         addStock(stock: AddStockInput): Stock
-        updateStock(stock_id: Int, stock: UpdateStockInput): Stock
-        deleteStock(stock_id: Int!): Stock
+        updateStock(product_id: Int!, stock: UpdateStockInput): Stock
+        deleteStock(product_id: Int!): Stock
+        requestFeedback(payload: FeedbackRequestInput): FeedbackRequest
     }
 
     type Stock {
@@ -22,13 +23,24 @@ export const typeDefinitions = `#graphql
 
     type History {
         id: ID!
-        stock_id: Int!
+        product_id: Int!
         type: String!
         quantity: Int!
         created_at: DateTime!
         updated_at: DateTime!
         note: String
     }
+
+     type FeedbackRequest {
+        id: ID!
+        batch_number: Int!,
+        note: String
+        status: FEEDBACKCSTATUS!
+        product_id: Int!
+        quantity: Int!
+        created_at: DateTime
+        updated_at: DateTime
+     }
 
     input AddStockInput {
         product_id: Int!
@@ -37,10 +49,22 @@ export const typeDefinitions = `#graphql
     }
 
     input UpdateStockInput {
-        product_id: Int
         quantity: Int!
         reorder_point: Int,
-        type: String,
+        type: String!,
+        note: String
+    }
+
+    enum FEEDBACKCSTATUS {
+        PENDING
+        COMPLETED
+    }
+
+    input FeedbackRequestInput {
+        batch_number: Int!
+        status: FEEDBACKCSTATUS
+        product_id: Int!,
+        quantity: Int!
         note: String
     }
 `;

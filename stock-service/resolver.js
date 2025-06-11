@@ -17,49 +17,66 @@ export const rootResolver = {
   },
   Mutation: {
     addStock: async (_, { stock: { product_id, quantity, reorder_point } }) => {
-      const isStockExist = await prismaClient.stock.findFirst({
-        where: {
-          product_id,
-        },
-      });
-      if (!!isStockExist) {
-        throw new Error("Product already has stock");
-      }
-      return await prismaClient.$transaction(async (trx) => {
-        const stock = await trx.stock.create({
-          data: {
+      try {
+        const isStockExist = await prismaClient.stock.findFirst({
+          where: {
             product_id,
-            quantity,
-            reorder_point: reorder_point ?? 0,
           },
         });
-        const history = await trx.history.create({
-          data: {
-            quantity,
-            type: "IN",
-            stock: {
-              connect: {
-                id: stock.id,
+        if (!!isStockExist) {
+          throw new Error("Product already has stock");
+        }
+        return await prismaClient.$transaction(async (trx) => {
+          const stock = await trx.stock.create({
+            data: {
+              product_id,
+              quantity,
+              reorder_point: reorder_point ?? 0,
+            },
+          });
+          const history = await trx.history.create({
+            data: {
+              quantity,
+              type: "IN",
+              stock: {
+                connect: {
+                  id: stock.id,
+                },
               },
             },
-          },
+          });
+          return stock;
         });
-        return stock;
-      });
+      } catch (err) {
+        throw new Error(`Something error occured: ${err.message}`);
+      }
     },
 
     updateStock: async (
       _,
-      { stock_id, stock: { quantity, reorder_point, type, note } }
+      { product_id, stock: { quantity, reorder_point, type, note } }
     ) => {
       try {
+        const stock = await prismaClient.stock.findUnique({
+          where: {
+            product_id,
+          },
+        });
         const updatedStock = await prismaClient.$transaction(async (trx) => {
           const updatedStock = await trx.stock.update({
             where: {
-              id: stock_id,
+              product_id: stock.product_id,
             },
             data: {
-              quantity,
+              quantity: {
+                ...(type === "IN"
+                  ? {
+                      increment: quantity,
+                    }
+                  : {
+                      decrement: quantity,
+                    }),
+              },
               reorder_point,
               updated_at: new Date(),
             },
@@ -117,13 +134,56 @@ export const rootResolver = {
         throw new Error(err.message);
       }
     },
+
+    deleteStock: async (_, { product_id }) => {
+      try {
+        const productStock = await prismaClient.stock.findUnique({
+          where: {
+            product_id,
+          },
+        });
+        if (!productStock) {
+          throw new Error(`Product with id ${product_id} did not found`);
+        }
+        const deletedProduct = await prismaClient.stock.delete({
+          where: {
+            product_id,
+          },
+        });
+      } catch (err) {
+        throw new Error(`Something error occured: ${err.message}`);
+      }
+
+      return deletedProduct;
+    },
+
+    requestFeedback: async (
+      _,
+      { payload: {batch_number, note, product_id, quantity} }
+    ) => {
+      console.log({ batch_number });
+      try {
+        return await prismaClient.feedbackRequest.create({
+          data: {
+            batch_number,
+            status: "PENDING",
+            note,
+            product_id,
+            quantity,
+          },
+        });
+      } catch (err) {
+        throw new Error(err.message);
+      }
+    },
   },
 
   Stock: {
     histories: async (parent) => {
+      console.log({ parent });
       const histories = await prismaClient.history.findMany({
         where: {
-          stock_id: parent.id,
+          product_id: parent.product_id,
         },
       });
       return histories;
