@@ -42,6 +42,8 @@ CREATE TABLE IF NOT EXISTS orders (
     status VARCHAR(50) DEFAULT 'PENDING', -- Contoh status: PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELED
     FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
     -- Tidak ada foreign key langsung ke products karena beda database,
+    -- integritas dijaga di level aplikasi.
+);
 
 -- ====================================================================
 -- Database dan Tabel untuk Layanan Otentikasi (Auth Service)
@@ -60,8 +62,6 @@ CREATE TABLE IF NOT EXISTS users (
     phone VARCHAR(25),
     address TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-    -- integritas dijaga di level aplikasi.
 );
 
 -- Contoh data untuk customers

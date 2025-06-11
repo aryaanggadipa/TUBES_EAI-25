@@ -31,6 +31,7 @@ const resolvers = {
     createProductionRequest: async (_, { input }) => {
       const { product_id, quantity_requested } = input;
       const request_sent_timestamp = new Date();
+      console.log({product_id, quantity_requested})
       
       let insertedId;
 
@@ -38,8 +39,8 @@ const resolvers = {
         // 1. Simpan permintaan awal ke database lokal dengan status 'SENDING'.
         // Ini berguna untuk melacak permintaan yang sedang dalam proses pengiriman.
         const [initialResult] = await db.query(
-          'INSERT INTO production_requests (product_id, quantity_requested, request_sent_timestamp, manufacturer_status_ack) VALUES (?, ?, ?, ?)',
-          [product_id, quantity_requested, request_sent_timestamp, 'SENDING']
+          'INSERT INTO production_requests (product_id, quantity, manufacturer_status_ack) VALUES (?, ?, ?)',
+          [product_id, quantity_requested, 'SENDING']
         );
         insertedId = initialResult.insertId;
 
