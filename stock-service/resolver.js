@@ -14,6 +14,18 @@ export const rootResolver = {
 
       return productStock;
     },
+    getFeedbackRequest: async (_, { feedback_id }) => {
+      try {
+        const feedback = await prismaClient.feedbackRequest.findUnique({
+          where: {
+            id: feedback_id,
+          },
+        });
+        return feedback;
+      } catch (err) {
+        throw new Error(`Something Error occured ${err.message}`);
+      }
+    },
   },
   Mutation: {
     addStock: async (_, { stock: { product_id, quantity, reorder_point } }) => {
@@ -159,7 +171,7 @@ export const rootResolver = {
 
     requestFeedback: async (
       _,
-      { payload: {batch_number, note, product_id, quantity} }
+      { payload: { batch_number, note, product_id, quantity } }
     ) => {
       console.log({ batch_number });
       try {

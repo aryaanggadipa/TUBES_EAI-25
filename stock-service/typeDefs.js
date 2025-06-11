@@ -2,6 +2,7 @@ export const typeDefinitions = `#graphql
   scalar DateTime
     type Query {
         getProductStock(product_id: Int!): Stock
+        getFeedbackRequest(feedback_id: Int!): FeedbackRequest
     }
 
     type Mutation {
