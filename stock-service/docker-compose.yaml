@@ -17,13 +17,14 @@ services:
     container_name: mysql_stock
 
   app:
-    build: .
+    image: ripanrenaldi25/stock-service:v1.0.0
     container_name: stock_service
     depends_on:
       db:
         condition: service_healthy
     environment:
       DATABASE_URL: mysql://root:root@db:3306/stock_db?schema=public
-      PORT_APP: 9001
-    expose:
-      - 9001:9001
+      PORT_APP: 8000
+      PRODUCTION_REQUEST_URL: http://localhost:9000/graphql
+    ports:
+      - 9002:8000
